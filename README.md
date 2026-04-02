@@ -1,20 +1,5 @@
 # Insurance Fraud Detection System
 
-## Results in brief (percentages)
-
-| Item | Summary |
-|------|---------|
-| **Class balance** | About **94%** not-fraud, **6%** fraud in `fraud_oracle.csv` (~15.4k rows) |
-| **AUC-ROC (validation)** | About **85%** of random (fraud, not-fraud) pairs ranked correctly (scale 0–100%) |
-| **AUC-ROC (test)** | About **82%** |
-| **AUC-PR (validation)** | About **24%** average precision for the fraud class (baseline ≈ fraud rate **6%**) |
-| **AUC-PR (test)** | About **22%** |
-| **3-class routing** | Probabilities &lt; **5%** → APPROVED; **5%–29%** → HUMAN_REVIEW; ≥ **29%** → REJECTED |
-
----
-Optional: open **`pipeline_architecture.html`** in a browser for a visual diagram
----
-
 ## 1. Project overview
 
 This is an **end-to-end insurance fraud detection system** for structured vehicle claims. It combines:
@@ -34,11 +19,26 @@ This is an **end-to-end insurance fraud detection system** for structured vehicl
 
 ---
 
-## 2. Playground notebook (`playground.ipynb`) & why these models
+## 2. Results in brief (percentages)
+
+| Item | Summary |
+|------|---------|
+| **Class balance** | About **94%** not-fraud, **6%** fraud in `fraud_oracle.csv` (~15.4k rows) |
+| **AUC-ROC (validation)** | About **85%** of random (fraud, not-fraud) pairs ranked correctly (scale 0–100%) |
+| **AUC-ROC (test)** | About **82%** |
+| **AUC-PR (validation)** | About **24%** average precision for the fraud class (baseline ≈ fraud rate **6%**) |
+| **AUC-PR (test)** | About **22%** |
+| **3-class routing** | Probabilities &lt; **5%** → APPROVED; **5%–29%** → HUMAN_REVIEW; ≥ **29%** → REJECTED |
+
+---
+Optional: open **`pipeline_architecture.html`** in a browser for a visual diagram
+---
+
+## 3. Playground notebook (`playground.ipynb`) & why these models
 
 > **Note:** Experiments live in **`playground.ipynb`**
 
-### 2.1 What the playground notebook is for
+### 3.1 What the playground notebook is for
 
 **`playground.ipynb`** is the **experiment workspace** — run it cell-by-cell to:
 
@@ -53,7 +53,7 @@ This is an **end-to-end insurance fraud detection system** for structured vehicl
 
 Use the notebook when you want to **change features, try new models, or reproduce figures** without touching the Streamlit app until you are happy with results.
 
-### 2.2 Why we chose these models
+### 3.2 Why we chose these models
 
 | Model / component | Role | Why we use it |
 |-------------------|------|----------------|
@@ -67,7 +67,7 @@ Use the notebook when you want to **change features, try new models, or reproduc
 
 ---
 
-## 3. Tools & technology
+## 4. Tools & technology
 
 | Area | Technology |
 |------|------------|
@@ -85,14 +85,14 @@ Use the notebook when you want to **change features, try new models, or reproduc
 
 ---
 
-## 4. How to use it
+## 5. How to use it
 
-### 4.1 Prerequisites
+### 5.1 Prerequisites
 
 - **`fraud_oracle.csv`** in the **project root**.  
 
 
-### 4.2 Virtual environment (`myenv`)
+### 5.2 Virtual environment (`myenv`)
 
 ```bash
 cd "path/to/project work"
@@ -100,7 +100,7 @@ python -m venv myenv
 source myenv/Scripts/activate
 ```
 
-### 4.3 Install dependencies
+### 5.3 Install dependencies
 
 For the full app stack (includes spaCy English model wheel and Groq client):
 
@@ -108,7 +108,7 @@ For the full app stack (includes spaCy English model wheel and Groq client):
 pip install -r src/requirements.txt
 ```
 
-### 4.4 Train models
+### 5.4 Train models
 
 From project root (with `myenv` active):
 
@@ -116,7 +116,7 @@ From project root (with `myenv` active):
 python src/train.py
 ```
 
-### 4.5 Groq API key
+### 5.5 Groq API key
 
 Create **`.env`** in the project root:
 
@@ -125,7 +125,7 @@ GROQ_API_KEY=your_key_here
 ```
 If the key is missing, **`genai.py`** still returns a **fallback** text summary.
 
-### 4.6 Run the web app
+### 5.6 Run the web app
 
 From project root:
 
@@ -144,7 +144,7 @@ Use the sidebar:
 
 ---
 
-## 5. Results (model performance)
+## 6. Results (model performance)
 
 **Dataset:** `fraud_oracle.csv` — ~15,420 rows, target **`FraudFound_P`** (~94% not fraud, ~6% fraud; severe imbalance).
 
@@ -175,7 +175,7 @@ Use the sidebar:
 ---
 
 
-## 6. Project layout
+## 7. Project layout
 
 ```
 project work/
