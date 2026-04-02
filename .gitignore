@@ -1,0 +1,36 @@
+
+# ── Virtual environments ─────────────────────────────────────────────────────
+myenv/
+.venv/
+venv/
+
+# ── Secrets (file, not a folder — do not use .env/) ──────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Jupyter ──────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+
+# ── Python cache ───────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+
+# ── ML artifacts (keep models/config.json tracked — thresholds + features) ──
+models/*.pkl
+models/*.joblib
+models/*.pickle
+
+# ── Runtime / local data folders ─────────────────────────────────────────────
+logs/
+data/
+
+# ── Dataset file (remove next line if you want fraud_oracle.csv in the repo) ─
+fraud_oracle.csv
+
+# ── Streamlit secrets ────────────────────────────────────────────────────────
+.streamlit/secrets.toml
+
+# ── OS ───────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
