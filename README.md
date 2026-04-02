@@ -19,7 +19,7 @@ This is an **end-to-end insurance fraud detection system** for structured vehicl
 
 ---
 
-## 2. Results in brief (percentages)
+## 2. Results
 
 | Item | Summary |
 |------|---------|
@@ -182,13 +182,13 @@ project work/
 ├── app.py                      # Streamlit UI
 ├── pipeline_architecture.html  # Static pipeline diagram (open in browser)
 ├── fraud_oracle.csv            # Data
-├── playground.ipynb            # Experiments & EDA (see §2)
+├── playground.ipynb            # Experiments & EDA
 ├── README.md
-├── requirements.txt            # Large export (optional / notebook)
-├── myenv/                      # Your virtual env (local; do not commit)
-├── .env                        # GROQ_API_KEY (local; do not commit)
+├── requirements.txt            # Large export
+├── myenv/                      # Your virtual env
+├── .env                        # GROQ_API_KEY
 ├── src/
-│   ├── requirements.txt        # Recommended install list for the app
+│   ├── requirements.txt        
 │   ├── preprocess.py
 │   ├── train.py
 │   ├── predict.py
@@ -203,5 +203,5 @@ project work/
 │   ├── scaler.pkl
 │   └── ordinal_encoder.pkl
 └── logs/
-    └── audit_log.csv           # Created at runtime
+    └── audit_log.csv           
 ```
