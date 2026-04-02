@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Insurance Fraud Detection — Pipeline Architecture</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f1117; color: #e0e0e0; padding: 30px; }
+  h1 { text-align: center; font-size: 1.5em; color: #fff; margin-bottom: 6px; letter-spacing: 1px; }
+  .subtitle { text-align: center; font-size: 0.85em; color: #888; margin-bottom: 36px; }
+
+  /* ── Layout ── */
+  .pipeline { display: flex; flex-direction: column; gap: 0; align-items: center; }
+
+  /* ── Stage block ── */
+  .stage {
+    width: 860px;
+    border-radius: 12px;
+    padding: 18px 24px;
+    position: relative;
+  }
+  .stage-header {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 10px;
+  }
+  .stage-num {
+    background: rgba(255,255,255,0.12);
+    border-radius: 50%;
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: bold; font-size: 0.9em; flex-shrink: 0;
+  }
+  .stage-title { font-size: 1.05em; font-weight: 700; }
+  .stage-file  { font-size: 0.75em; opacity: 0.65; font-family: monospace; margin-left: auto; }
+
+  .stage-body  { display: flex; gap: 16px; flex-wrap: wrap; }
+  .pill {
+    border-radius: 6px; padding: 5px 12px; font-size: 0.78em;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.06);
+  }
+  .pill.key { font-weight: 600; }
+
+  .stage-desc {
+    font-size: 0.82em; color: #aaa; margin-top: 8px; line-height: 1.6;
+  }
+
+  /* ── Arrow ── */
+  .arrow {
+    width: 2px; height: 32px;
+    background: linear-gradient(to bottom, #555, #333);
+    position: relative;
+    margin: 0 auto;
+  }
+  .arrow::after {
+    content: '';
+    position: absolute; bottom: -7px; left: -5px;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 8px solid #555;
+  }
+  .arrow-label {
+    position: absolute; left: 12px; top: 8px;
+    font-size: 0.7em; color: #666; white-space: nowrap;
+  }
+
+  /* ── Colors per stage ── */
+  .s-input   { background: #1a1f2e; border: 1px solid #3a4a6b; }
+  .s-nlp     { background: #1a2a1a; border: 1px solid #3a6b3a; }
+  .s-ml      { background: #1e1a2e; border: 1px solid #5a3a7a; }
+  .s-genai   { background: #2a1a1a; border: 1px solid #7a3a3a; }
+  .s-review  { background: #2a2a1a; border: 1px solid #6b6b2a; }
+  .s-audit   { background: #1a2a2a; border: 1px solid #2a6b6b; }
+  .s-output  { background: #1a1a1a; border: 1px solid #555; }
+
+  .c-input  { color: #7aadff; }
+  .c-nlp    { color: #7aff9a; }
+  .c-ml     { color: #c87aff; }
+  .c-genai  { color: #ff7a7a; }
+  .c-review { color: #ffe07a; }
+  .c-audit  { color: #7affff; }
+  .c-output { color: #ccc; }
+
+  /* ── Decision fork ── */
+  .fork {
+    width: 860px;
+    display: flex; gap: 16px; align-items: flex-start; margin: 0;
+  }
+  .fork-branch {
+    flex: 1; border-radius: 10px; padding: 14px 16px;
+    border: 1px dashed rgba(255,255,255,0.2);
+  }
+  .fork-title { font-size: 0.82em; font-weight: 700; margin-bottom: 8px; }
+  .fork-body  { font-size: 0.75em; color: #aaa; line-height: 1.6; }
+  .b-green { background: #0d1f0d; border-color: #3a7a3a; }
+  .b-yellow{ background: #1f1f0d; border-color: #7a7a2a; }
+  .b-red   { background: #1f0d0d; border-color: #7a2a2a; }
+
+  /* ── Output box ── */
+  .outputs {
+    width: 860px;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+    margin-top: 0;
+  }
+  .out-box {
+    background: #1a1a1a; border: 1px solid #333; border-radius: 8px;
+    padding: 12px; text-align: center;
+  }
+  .out-icon { font-size: 1.6em; margin-bottom: 4px; }
+  .out-title { font-size: 0.78em; font-weight: 700; color: #ddd; }
+  .out-desc  { font-size: 0.7em; color: #888; margin-top: 4px; line-height: 1.5; }
+
+  /* ── Legend ── */
+  .legend {
+    display: flex; gap: 20px; flex-wrap: wrap;
+    justify-content: center; margin-top: 30px;
+  }
+  .leg-item { display: flex; align-items: center; gap: 6px; font-size: 0.75em; color: #999; }
+  .leg-dot  { width: 10px; height: 10px; border-radius: 50%; }
+</style>
+</head>
+<body>
+
+<h1>🔍 Insurance Fraud Detection System</h1>
+<p class="subtitle">End-to-End AI Pipeline Architecture &nbsp;|&nbsp; LightGBM + Isolation Forest + spaCy + LLaMA 3.1 + Streamlit</p>
+
+<div class="pipeline">
+
+  <!-- STAGE 0: Raw Input -->
+  <div class="stage s-input">
+    <div class="stage-header">
+      <div class="stage-num c-input">0</div>
+      <div class="stage-title c-input">Raw Claim Input</div>
+      <div class="stage-file">app.py → Submit Claim form</div>
+    </div>
+    <div class="stage-body">
+      <span class="pill">30 structured fields</span>
+      <span class="pill">Age, Make, Fault, PolicyType</span>
+      <span class="pill">PoliceReportFiled, WitnessPresent</span>
+      <span class="pill">AgentType, PastNumberOfClaims</span>
+      <span class="pill">Optional: free-text description</span>
+    </div>
+    <div class="stage-desc">
+      Claim submitted via Streamlit form. All fields match <code>fraud_oracle.csv</code> schema.
+      Free-text description is optional — if absent, synthetic text is auto-generated for NLP.
+    </div>
+  </div>
+
+  <div class="arrow" style="height:28px"><span class="arrow-label">claim dict</span></div>
+
+  <!-- STAGE 1: Preprocessing -->
+  <div class="stage s-ml">
+    <div class="stage-header">
+      <div class="stage-num c-ml">1</div>
+      <div class="stage-title c-ml">Data Preprocessing</div>
+      <div class="stage-file">src/preprocess.py</div>
+    </div>
+    <div class="stage-body">
+      <span class="pill key">clean()</span>
+      <span class="pill">Fix Age=0 → median</span>
+      <span class="pill">Replace '0' placeholders</span>
+      <span class="pill key">OrdinalEncoder</span>
+      <span class="pill">10 ordinal columns, explicit order</span>
+      <span class="pill key">One-Hot Encoding</span>
+      <span class="pill">15 nominal columns → 75 OHE features</span>
+      <span class="pill key">StandardScaler</span>
+      <span class="pill">5 numeric columns scaled</span>
+    </div>
+    <div class="stage-desc">
+      Final feature matrix: <strong>90 features</strong> (5 numeric + 10 ordinal + 75 OHE).
+      Artifacts fitted on training data only; same scaler/encoder used at inference.
+    </div>
+  </div>
+
+  <div class="arrow" style="height:28px"><span class="arrow-label">X (90 features)</span></div>
+
+  <!-- STAGE 2: Isolation Forest -->
+  <div class="stage s-ml">
+    <div class="stage-header">
+      <div class="stage-num c-ml">2</div>
+      <div class="stage-title c-ml">Isolation Forest — Anomaly Detection</div>
+      <div class="stage-file">src/predict.py &nbsp;|&nbsp; models/isolation_forest.pkl</div>
+    </div>
+    <div class="stage-body">
+      <span class="pill key">IsolationForest(n_estimators=100, contamination=0.06)</span>
+      <span class="pill">Fitted on training data only</span>
+      <span class="pill">anomaly_score = −score_samples(X)</span>
+      <span class="pill">#1 SHAP feature (mean abs = 1.57)</span>
+    </div>
+    <div class="stage-desc">
+      Unsupervised anomaly detection adds <strong>anomaly_score</strong> as feature #91.
+      Higher score = more anomalous. Appended to feature vector before LightGBM.
+    </div>
+  </div>
+
+  <div class="arrow" style="height:28px"><span class="arrow-label">X (91 features)</span></div>
+
+  <!-- STAGE 3: LightGBM -->
+  <div class="stage s-ml">
+    <div class="stage-header">
+      <div class="stage-num c-ml">3</div>
+      <div class="stage-title c-ml">LightGBM Fraud Classifier</div>
+      <div class="stage-file">src/predict.py &nbsp;|&nbsp; models/fraud_model.pkl</div>
+    </div>
+    <div class="stage-body">
+      <span class="pill key">LGBMClassifier(n_estimators=300, max_depth=6, lr=0.05)</span>
+      <span class="pill">SMOTE balanced training</span>
+      <span class="pill">Val AUC-PR: 0.2408</span>
+      <span class="pill">Val AUC-ROC: 0.8495</span>
+      <span class="pill">Test Recall (Fraud): 50%</span>
+      <span class="pill key">SHAP TreeExplainer</span>
+      <span class="pill">Top 5 features returned</span>
+    </div>
+    <div class="stage-desc">
+      Outputs <strong>fraud_probability</strong> (0–1).
+      Top SHAP features: anomaly_score, Fault_Third Party, BasePolicy_Liability, DriverRating, WeekOfMonthClaimed.
+    </div>
+  </div>
+
+  <div class="arrow" style="height:28px"><span class="arrow-label">fraud_prob + SHAP</span></div>
+
+  <!-- STAGE 4: Threshold → Decision -->
+  <div class="stage s-ml">
+    <div class="stage-header">
+      <div class="stage-num c-ml">4</div>
+      <div class="stage-title c-ml">3-Class Threshold Decision</div>
+      <div class="stage-file">src/predict.py &nbsp;|&nbsp; models/config.json</div>
+    </div>
+    <div class="stage-body">
+      <span class="pill">low_threshold = 0.05</span>
+      <span class="pill">high_threshold = 0.29</span>
+      <span class="pill">Tuned on val set (F1-optimal)</span>
+    </div>
+    <div class="stage-desc">
+      prob &lt; 0.05 → <strong style="color:#28a745">APPROVED</strong> &nbsp;|&nbsp;
+      0.05 ≤ prob &lt; 0.29 → <strong style="color:#ffc107">HUMAN REVIEW</strong> &nbsp;|&nbsp;
+      prob ≥ 0.29 → <strong style="color:#dc3545">REJECTED</strong>
+    </div>
+  </div>
+
+  <div class="arrow" style="height:28px"><span class="arrow-label">decision + prob</span></div>
+
+  <!-- STAGE 5: NLP -->
+  <div class="stage s-nlp">
+    <div class="stage-header">
+      <div class="stage-num c-nlp">5</div>
+      <div class="stage-title c-nlp">NLP Pipeline (spaCy)</div>
+      <div class="stage-file">src/nlp.py &nbsp;|&nbsp; en_core_web_sm</div>
+    </div>
+    <div class="stage-body">
+      <span class="pill key">validate_claim()</span>
+      <span class="pill">Required fields check</span>
+      <span class="pill key">generate_claim_text()</span>
+      <span class="pill">Structured fields → natural language</span>
+      <span class="pill key">extract_entities()</span>
+      <span class="pill">spaCy NER: dates, orgs, money, locations</span>
+      <span class="pill key">check_consistency()</span>
+      <span class="pill">Text vs form contradiction flags</span>
+      <span class="pill key">scan_risk_keywords()</span>
+      <span class="pill">drunk, staged, fabricated, suspicious…</span>
+      <span class="pill key">nlp_risk_score</span>
+      <span class="pill">0–1 weighted score</span>
+    </div>
+    <div class="stage-desc">
+      Synthetic text generated from structured fields bridges the gap between structured data and NLP.
+      Consistency + keyword checks only activate on user-provided free-text descriptions.
+    </div>
+  </div>
+
+  <div class="arrow" style="height:28px"><span class="arrow-label">nlp_result + nlp_summary</span></div>
+
+  <!-- STAGE 6: GenAI -->
+  <div class="stage s-genai">
+    <div class="stage-header">
+      <div class="stage-num c-genai">6</div>
+      <div class="stage-title c-genai">Generative AI Summary (Groq LLaMA 3.1)</div>
+      <div class="stage-file">src/genai.py &nbsp;|&nbsp; llama-3.1-8b-instant</div>
+    </div>
+    <div class="stage-body">
+      <span class="pill key">Prompt = ML results + NLP results + claim facts</span>
+      <span class="pill">temperature=0.3</span>
+      <span class="pill">max_tokens=600</span>
+      <span class="pill">4-section report</span>
+      <span class="pill">Fallback: rule-based summary if API unavailable</span>
+    </div>
+    <div class="stage-desc">
+      Generates: <strong>Risk Summary</strong> → <strong>Key Red Flags</strong> →
+      <strong>Mitigating Factors</strong> → <strong>Reviewer Recommendation</strong>.
+      Human-readable report for the reviewer.
+    </div>
+  </div>
+
+  <div class="arrow" style="height:28px"><span class="arrow-label">report text</span></div>
+
+  <!-- STAGE 7: Audit Log -->
+  <div class="stage s-audit">
+    <div class="stage-header">
+      <div class="stage-num c-audit">7</div>
+      <div class="stage-title c-audit">Audit Logging</div>
+      <div class="stage-file">src/audit.py &nbsp;|&nbsp; logs/audit_log.csv</div>
+    </div>
+    <div class="stage-body">
+      <span class="pill key">log_decision()</span>
+      <span class="pill">timestamp, claim_id</span>
+      <span class="pill">fraud_probability, decision, anomaly_score</span>
+      <span class="pill">top 3 SHAP features</span>
+      <span class="pill">nlp_risk_score, flags, keywords</span>
+      <span class="pill">genai_summary_snippet</span>
+      <span class="pill key">log_reviewer_action()</span>
+      <span class="pill">reviewer action + notes + final outcome</span>
+    </div>
+    <div class="stage-desc">
+      Every decision is logged immediately. Reviewer actions update the same row.
+      CSV file is downloadable from the Audit Dashboard. Supports future model retraining.
+    </div>
+  </div>
+
+  <div class="arrow" style="height:28px"><span class="arrow-label">claim_id</span></div>
+
+  <!-- Decision fork -->
+  <div class="fork">
+    <div class="fork-branch b-green">
+      <div class="fork-title" style="color:#7aff9a">✅ APPROVED (prob &lt; 0.05)</div>
+      <div class="fork-body">
+        Claim auto-approved.<br>
+        No human review needed.<br>
+        Outcome logged to audit.
+      </div>
+    </div>
+    <div class="fork-branch b-yellow">
+      <div class="fork-title" style="color:#ffe07a">⚠️ HUMAN REVIEW (0.05–0.29)</div>
+      <div class="fork-body">
+        Reviewer sees: claim facts, fraud prob,<br>
+        SHAP features, NLP flags, LLaMA report.<br>
+        Submits: Approve / Reject / Escalate + notes.<br>
+        Final outcome logged to audit.
+      </div>
+    </div>
+    <div class="fork-branch b-red">
+      <div class="fork-title" style="color:#ff7a7a">❌ REJECTED (prob ≥ 0.29)</div>
+      <div class="fork-body">
+        Claim flagged for rejection.<br>
+        LLaMA report explains reason.<br>
+        Reviewer notified via app.<br>
+        Outcome logged to audit.
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow" style="height:28px"></div>
+
+  <!-- Final outputs -->
+  <div class="outputs">
+    <div class="out-box">
+      <div class="out-icon">📊</div>
+      <div class="out-title">Results Page</div>
+      <div class="out-desc">Fraud gauge, decision badge, SHAP chart, NLP analysis, GenAI report</div>
+    </div>
+    <div class="out-box">
+      <div class="out-icon">👤</div>
+      <div class="out-title">Human Review Page</div>
+      <div class="out-desc">Reviewer form with claim facts and decision submission</div>
+    </div>
+    <div class="out-box">
+      <div class="out-icon">📁</div>
+      <div class="out-title">Audit Dashboard</div>
+      <div class="out-desc">KPI metrics, decision pie chart, recent claims table, CSV download</div>
+    </div>
+    <div class="out-box">
+      <div class="out-icon">📄</div>
+      <div class="out-title">audit_log.csv</div>
+      <div class="out-desc">Full record of every claim — usable for model retraining</div>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="leg-item"><div class="leg-dot" style="background:#3a4a6b"></div> Input / App Layer</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#5a3a7a"></div> ML Pipeline (preprocess.py, predict.py)</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#3a6b3a"></div> NLP Pipeline (nlp.py + spaCy)</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#7a3a3a"></div> Generative AI (genai.py + Groq)</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#2a6b6b"></div> Audit Logging (audit.py)</div>
+  </div>
+
+</div>
+
+</body>
+</html>
